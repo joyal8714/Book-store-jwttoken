@@ -1,0 +1,20 @@
+<h1>Edit Book</h1>
+
+<form action="/admin/edit-book/{{book._id}}" method="POST" enctype="multipart/form-data">
+  <label>Title:</label><br>
+  <input type="text" name="title" value="{{book.title}}" required><br><br>
+
+  <label>Author:</label><br>
+  <input type="text" name="author" value="{{book.author}}" required><br><br>
+
+  <label>Price:</label><br>
+  <input type="number" name="price" value="{{book.price}}" required><br><br>
+
+  <label>Old Cover:</label><br>
+  <img src="/uploads/{{book.cover}}" width="100"><br><br>
+
+  <label>New Cover (Optional):</label><br>
+  <input type="file" name="cover"><br><br>
+
+  <button type="submit">Update Book</button>
+</form>

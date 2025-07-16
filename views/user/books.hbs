@@ -1,0 +1,16 @@
+<h2>All Books</h2>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  {{#each books}}
+    <div style="border: 1px solid #ccc; padding: 10px; width: 200px; text-align: center;">
+      <img src="/uploads/{{this.cover}}" alt="{{this.title}}" style="width: 100px; height: 140px; object-fit: cover;"><br>
+      <strong>{{this.title}}</strong><br>
+      <small>by {{this.author}}</small><br>
+      <p style="color: green;">₹{{this.price}}</p>
+        
+    {{!-- <a href="/admin/edit-book/{{this._id}}">
+      <button>Edit</button>
+    </a> --}}
+    </div>
+  {{/each}}
+</div>
