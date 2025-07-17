@@ -4,7 +4,6 @@ const Book = require("../models/Book");
 const multer = require("multer");
 const path = require("path");
 
-// Ensure the 'uploads' directory exists
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -17,16 +16,13 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    // Add file extension preservation and sanitization
     const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
     const uniqueName = Date.now() + "-" + sanitizedName;
     cb(null, uniqueName);
   },
 });
 
-// Add file filter for security
 const fileFilter = (req, file, cb) => {
-  // Check if file is an image
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
@@ -48,8 +44,7 @@ router.get("/add-book", authenticateToken, authorizeRoles("admin"), async (req, 
   try {
     const booksData = await Book.find().sort({ createdAt: -1 });
     const books = booksData.map((book) => book.toObject()); // Convert to plain objects
-   // console.log("Books fetched:", books.length);
-   // console.log("Sample book:", books[0]);
+  
     // return res.status(200).json({books})
     res.render("admin/add-book", {
       books,

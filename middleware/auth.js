@@ -1,20 +1,47 @@
 const jwt = require('jsonwebtoken');
 
 function authenticateToken(req, res, next) {
-  const token = req.cookies.accessToken;
-  if (!token) return res.redirect('/login');
+  const accessToken = req.cookies.accessToken;
+  const refreshToken = req.cookies.refreshToken;
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.redirect('/login');
-    req.user = user;
-    next();
+  
+  if (!accessToken && !refreshToken) return res.redirect('/login');
+
+  jwt.verify(accessToken, process.env.JWT_SECRET, (err, user) => {
+    if (err && err.name === 'TokenExpiredError') {
+      jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (refreshErr, decoded) => {
+        if (refreshErr) {
+          return res.redirect('/login');
+        }
+
+        //  new access token
+        const newAccessToken = jwt.sign(
+          { username: decoded.username, role: decoded.role },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+        );
+
+       
+        res.cookie('accessToken', newAccessToken, { httpOnly: true });
+
+        // Inject user info into request
+        req.user = decoded;
+        next();
+      });
+
+    } else if (err) {
+      return res.redirect('/login');
+    } else {
+      req.user = user;
+      next();
+    }
   });
 }
 
 function authorizeRoles(...roles) {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(403).send('Access Denied');
+      return res.status(403).send("Access Denied");
     }
     next();
   };
