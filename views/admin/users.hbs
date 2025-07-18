@@ -1,0 +1,31 @@
+<h2>All Users</h2>
+<form action="/admin/users" method="GET">
+  <input type="text" name="search" placeholder="Search by username..." value="{{searchQuery}}">
+  <button type="submit">🔍 Search</button>
+</form>
+<br>
+
+<table border="1" cellpadding="10">
+  <tr>
+    <th>Username</th>
+    <th>Role</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+  {{#each users}}
+    <tr>
+      <td>{{this.username}}</td>
+      <td>{{this.role}}</td>
+      <td>{{#if this.isBlocked}}❌ Blocked{{else}}✅ Active{{/if}}</td>
+      <td>
+        <form action="/admin/toggle-block/{{this._id}}" method="POST" style="display: inline;">
+          {{#if this.isBlocked}}
+            <button type="submit">Unblock</button>
+          {{else}}
+            <button type="submit">Block</button>
+          {{/if}}
+        </form>
+      </td>
+    </tr>
+  {{/each}}
+</table>

@@ -3,11 +3,12 @@ const router = express.Router();
 const Book = require("../models/Book");
 const multer = require("multer");
 const path = require("path");
+const User = require('../models/User'); 
 
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true }); // Added recursive option
+  fs.mkdirSync(uploadsDir, { recursive: true }); 
 }
 
 // Multer Storage Configuration
@@ -174,5 +175,51 @@ router.post("/delete-book/:id", authenticateToken, authorizeRoles("admin"), asyn
     });
   }
 });
+
+
+
+
+//usersssss
+
+router.get("/users", authenticateToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const searchQuery = req.query.search || ''; // Get search query from URL
+
+    const usersFromDb = await User.find({
+      username: { $regex: searchQuery, $options: 'i' } // Case-insensitive search
+    });
+
+    const users = usersFromDb.map(user => user.toObject());
+
+    res.render('admin/users', { users, searchQuery }); // Pass searchQuery to keep input value
+  } catch (err) {
+    console.log("Error while fetching users:", err);
+    res.status(500).send("Error while fetching users");
+  }
+});
+
+
+
+//blockkk
+
+
+
+
+router.post('/toggle-block/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.send('User not found');
+
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    res.redirect('/admin/users');
+  } catch (err) {
+    console.error('Block/Unblock Error:', err);
+    res.send('Error blocking/unblocking user');
+  }
+});
+
+
 
 module.exports = router;

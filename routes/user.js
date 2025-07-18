@@ -141,7 +141,7 @@ res.render('user/cart', {
 router.get('/books', authenticateToken, async (req, res) => {
   const booksData = await Book.find().sort({ createdAt: -1 });
   const books = booksData.map(book => book.toObject());
-    console.log("✅ REQ.USER in /books route:", req.user);  // Debug here
+    console.log("REQ.USER in /books route:", req.user);  // Debug here
 
   res.render('user/books', { books, user: req.user }); });
 
