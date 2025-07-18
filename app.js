@@ -28,11 +28,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 
 // View Engine - Handlebars
-app.engine('hbs', exphbs.engine({
-  extname: 'hbs',
-  defaultLayout: 'main',
-  layoutsDir: path.join(__dirname, 'views/layouts')
-}));
+
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -48,3 +44,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Book Manager running at http://localhost:${PORT}`);
 });
+
+//  Register the helper here
+const hbs = exphbs.create({
+  extname: 'hbs',
+  defaultLayout: 'main',
+  layoutsDir: path.join(__dirname, 'views/layouts'),
+  helpers: {
+    eq: (a, b) => a === b,
+    multiply: (a, b) => a * b
+  }
+});
+
+app.engine('hbs', hbs.engine); 
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));

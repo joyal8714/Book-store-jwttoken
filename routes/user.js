@@ -40,8 +40,15 @@ router.post('/login', async (req, res) => {
       return res.send("Invalid credentials");
     }
 
-    const accessToken = jwt.sign({ username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ username }, process.env.JWT_REFRESH_SECRET);
+   const accessToken = jwt.sign(
+  { _id: user._id, username, role: user.role }, 
+  process.env.JWT_SECRET, 
+  { expiresIn: '15m' }
+);
+const refreshToken = jwt.sign(
+  { _id: user._id, username, role: user.role }, 
+  process.env.JWT_REFRESH_SECRET
+);
 
     res.cookie('accessToken', accessToken, { httpOnly: true });
     res.cookie('refreshToken', refreshToken, { httpOnly: true });
@@ -70,11 +77,73 @@ router.get('/logout', (req, res) => {
 
 
 
-router.get('/books', async (req, res) => {
+const Cart = require('../models/Cart');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+
+router.post('/add-to-cart/:bookId', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  const userId = req.user._id;
+  const bookId = req.params.bookId;
+
+  try {
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      cart = new Cart({ userId, items: [] });
+    }
+
+    // Check if book already in cart
+    const existingItem = cart.items.find(item => item.bookId.equals(bookId));
+
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.items.push({ bookId });
+    }
+
+    await cart.save();
+    res.redirect('/books'); // or to /cart if you prefer
+
+  } catch (err) {
+    console.error('Add to cart error:', err);
+    res.status(500).send('Failed to add to cart');
+  }
+});
+
+
+
+router.get('/cart', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const cart = await Cart.findOne({ userId }).populate('items.bookId');
+    console.log("🛒 Cart Data:", JSON.stringify(cart, null, 2)); // Log entire cart
+
+    const items = cart?.items || [];
+
+   const plainCart = cart?.toObject() || {};
+
+res.render('user/cart', {
+  cart: plainCart,
+  hasItems: plainCart.items && plainCart.items.length > 0
+});
+
+  } catch (err) {
+    console.error('Cart fetch error:', err);
+    res.status(500).send('Error loading cart');
+  }
+});
+
+
+
+
+
+
+router.get('/books', authenticateToken, async (req, res) => {
   const booksData = await Book.find().sort({ createdAt: -1 });
   const books = booksData.map(book => book.toObject());
-  res.render('user/books', { books });
-});
+    console.log("✅ REQ.USER in /books route:", req.user);  // Debug here
+
+  res.render('user/books', { books, user: req.user }); });
 
 router.get('/', (req, res) => res.redirect('/login'));
 

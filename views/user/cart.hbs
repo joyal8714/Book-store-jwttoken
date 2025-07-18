@@ -1,0 +1,21 @@
+<h2>Your Cart</h2>
+
+{{#if hasItems}}
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    {{#each cart.items}}
+      <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+        <img src="/uploads/{{this.bookId.cover}}" alt="{{this.bookId.title}}" style="width: 100px; height: 140px; object-fit: cover;" />
+        
+        <div>
+          <h3>{{this.bookId.title}}</h3>
+          <p>by {{this.bookId.author}}</p>
+          <p>Price: ₹{{this.bookId.price}}</p>
+          <p>Quantity: {{this.quantity}}</p>
+          <p>Total: ₹{{multiply this.bookId.price this.quantity}}</p>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <p>Your cart is empty</p>
+{{/if}}

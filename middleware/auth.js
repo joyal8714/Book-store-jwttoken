@@ -15,17 +15,18 @@ function authenticateToken(req, res, next) {
         }
 
         //  new access token
-        const newAccessToken = jwt.sign(
-          { username: decoded.username, role: decoded.role },
-          process.env.JWT_SECRET,
-          { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
-        );
+       const newAccessToken = jwt.sign(
+  { _id: decoded._id, username: decoded.username, role: decoded.role },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+);
 
        
         res.cookie('accessToken', newAccessToken, { httpOnly: true });
 
         // Inject user info into request
-        req.user = decoded;
+     req.user = { _id: decoded._id, username: decoded.username, role: decoded.role };
+
         next();
       });
 
@@ -48,3 +49,5 @@ function authorizeRoles(...roles) {
 }
 
 module.exports = { authenticateToken, authorizeRoles };
+
+

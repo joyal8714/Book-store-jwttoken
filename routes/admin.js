@@ -61,7 +61,7 @@ router.get("/add-book", authenticateToken, authorizeRoles("admin"), async (req, 
 });
 
 //  POST Route: Add Book with Image Upload
-router.post("/add-book", upload.single("cover"), async (req, res) => {
+router.post("/add-book", authenticateToken, authorizeRoles("admin"), upload.single("cover"), async (req, res) => {
   try {
     // Validate required fields
     const { title, author, price } = req.body;
@@ -118,7 +118,7 @@ router.post("/add-book", upload.single("cover"), async (req, res) => {
   }
 });
 
-router.get("/edit-book/:id", async (req, res) => {
+router.get("/edit-book/:id", authenticateToken, authorizeRoles("admin"), async (req, res) => {
   try {
     const bookDoc = await Book.findById(req.params.id);
     const book = bookDoc.toObject(); //  convert to plain object
@@ -128,7 +128,7 @@ router.get("/edit-book/:id", async (req, res) => {
   }
 });
 
-router.post("/edit-book/:id", upload.single("cover"), async (req, res) => {
+router.get("/edit-book/:id", authenticateToken, authorizeRoles("admin"), async (req, res) => {
   try {
     const updateData = {
       title: req.body.title,
@@ -150,9 +150,11 @@ router.post("/edit-book/:id", upload.single("cover"), async (req, res) => {
 });
 
 // DELETE BOOK ROUTE
-router.post("/delete-book/:id", async (req, res) => {
+router.post("/delete-book/:id", authenticateToken, authorizeRoles("admin"), async (req, res) => {
   try {
     const bookId = req.params.id;
+        const redirectPath = req.body.returnTo || '/admin/add-book';
+
     const result = await Book.findByIdAndDelete(bookId);
     // if (result) {
     //   return res.status(200).json({
@@ -162,7 +164,7 @@ router.post("/delete-book/:id", async (req, res) => {
     //   });
     // }
     //return res.status(400).json({error:"data not available"})
-    res.redirect('/admin/add-book'); // or your correct redirect path
+ res.redirect(redirectPath);
   } catch (err) {
     console.error("Error deleting book:", err);
     return res.status(500).json({
