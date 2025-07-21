@@ -7,20 +7,36 @@ const User=require('../models/User');
 let refreshTokens = [];
 
 // View Routes
-router.get('/login', (req, res) => res.render('user/login'));
 router.get('/register', (req, res) => res.render('user/register'));
 
+router.get('/login',(req,res)=>{
+  const accessToken = req.cookies.accessToken
 
+try{
+  const decoded=jwt.verify(accessToken,proccess.env.JWT_SECRET)
+  if(decoded.role==='admin'){
+    return res.redirect('/admin/add-book')
+  }
+else{
+  return res.redirect('/books')
+}
+}catch(err){
+  console.log("login error",err)
+}
+
+  res.set('Cache-Control', 'no-store'); 
+  res.render('user/login');
+})
 
 
 router.post('/register',async(req,res)=>{
-const{username,password,role}=req.body
+const{username,password,role,email}=req.body
 
 try{
-const existingUser=await User.findOne({username}) 
+const existingUser=await User.findOne({email}) 
 if (existingUser) return res.send('user already exist')
 
-  const newUser=new User({username,password,role})
+  const newUser=new User({username,password,role,email})
   await newUser.save()
 res.redirect('/login')
 }catch (err){
@@ -32,10 +48,10 @@ res.send('registration failed')
 
 
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password,email } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
     if (!user || user.password !== password) {
       return res.send("Invalid credentials");
     }
@@ -138,6 +154,78 @@ res.render('user/cart', {
 
 
 
+
+const { client } = require('../utils/paypal');
+
+router.post('/buy', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  const userId = req.user._id;
+  const cart = await Cart.findOne({ userId }).populate('items.bookId');
+
+  const total = cart.items.reduce((sum, item) => {
+    return sum + item.bookId.price * item.quantity;
+  }, 50.34);
+
+  const request = new paypal.orders.OrdersCreateRequest();
+  request.prefer("return=representation");
+  request.requestBody({
+    intent: "CAPTURE",
+    purchase_units: [{
+      amount: {
+        currency_code: "USD",
+        value: total.toFixed(2)
+      }
+    }],
+    application_context: {
+      return_url: "http://localhost:3000/success",
+      cancel_url: "http://localhost:3000/cancel"
+    }
+  });
+
+  try {
+    const order = await client().execute(request);
+    res.redirect(order.result.links.find(link => link.rel === 'approve').href);
+  } catch (err) {
+    console.error("PayPal Order Error", err);
+    res.status(500).send("Payment error");
+  }
+});
+
+
+
+
+
+
+const paypal = require('@paypal/checkout-server-sdk');
+
+router.get('/success', async (req, res) => {
+  const { token } = req.query;
+
+  const request = new paypal.orders.OrdersCaptureRequest(token);
+  request.requestBody({});
+
+  try {
+    const capture = await client().execute(request);
+    console.log("✅ Payment Success:", capture.result);
+
+    // Clear cart or show success message
+    res.send("Payment successful. Thank you for your purchase!");
+  } catch (err) {
+    console.error("Capture Error", err);
+    res.status(500).send("Failed to capture order");
+  }
+});
+
+router.get('/cancel', (req, res) => {
+  res.send("Payment cancelled");
+});
+
+
+
+
+
+
+
+
 router.get('/books', authenticateToken, async (req, res) => {
   const booksData = await Book.find().sort({ createdAt: -1 });
   const books = booksData.map(book => book.toObject());
@@ -146,5 +234,6 @@ router.get('/books', authenticateToken, async (req, res) => {
   res.render('user/books', { books, user: req.user }); });
 
 router.get('/', (req, res) => res.redirect('/login'));
+
 
 module.exports = router;

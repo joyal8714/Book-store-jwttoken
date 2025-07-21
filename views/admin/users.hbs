@@ -8,6 +8,7 @@
 <table border="1" cellpadding="10">
   <tr>
     <th>Username</th>
+    <th>Email</th>
     <th>Role</th>
     <th>Status</th>
     <th>Action</th>
@@ -15,6 +16,7 @@
   {{#each users}}
     <tr>
       <td>{{this.username}}</td>
+      <td>{{this.email}}</td>
       <td>{{this.role}}</td>
       <td>{{#if this.isBlocked}}❌ Blocked{{else}}✅ Active{{/if}}</td>
       <td>

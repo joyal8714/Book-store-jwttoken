@@ -12,9 +12,15 @@
           <p>Price: ₹{{this.bookId.price}}</p>
           <p>Quantity: {{this.quantity}}</p>
           <p>Total: ₹{{multiply this.bookId.price this.quantity}}</p>
+          
+          <form action="/buy" method="POST">
+  <button type="submit">💳 Buy Now with PayPal</button>
+</form>
+
         </div>
       </div>
     {{/each}}
+    
   </div>
 {{else}}
   <p>Your cart is empty</p>

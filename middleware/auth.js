@@ -18,7 +18,7 @@ async function authenticateToken(req, res, next) {
     }
 
     if (dbUser.isBlocked) {
-      return res.status(403).send("🚫 You are blocked by the admin.");
+      return res.status(403).send( "You are blocked by the admin.");
     }
 
     req.user = {
