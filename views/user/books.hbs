@@ -1,4 +1,8 @@
 <h2>All Books</h2>
+<form action="/logout" method="GET" style="text-align:right">
+  <button type="submit" style="background-color: red; color: white; text-align:right">Logout</button>
+</form>
+
 <a href="/cart" class="btn btn-success" style="float: right;"> View Cart</a>
 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
   {{#each books}}

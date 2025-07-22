@@ -5,6 +5,7 @@ const Book = require('../models/Book');
 const cookieParser = require('cookie-parser');
 const User=require('../models/User');
 let refreshTokens = [];
+const Otp = require('../models/Otp');
 
 // View Routes
 router.get('/register', (req, res) => res.render('user/register'));
@@ -13,7 +14,7 @@ router.get('/login',(req,res)=>{
   const accessToken = req.cookies.accessToken
 
 try{
-  const decoded=jwt.verify(accessToken,proccess.env.JWT_SECRET)
+  const decoded=jwt.verify(accessToken,process.env.JWT_SECRET)
   if(decoded.role==='admin'){
     return res.redirect('/admin/add-book')
   }
@@ -28,23 +29,83 @@ else{
   res.render('user/login');
 })
 
+const sendOTP = require('../utils/mailer');
 
-router.post('/register',async(req,res)=>{
-const{username,password,role,email}=req.body
+router.post('/register', async (req, res) => {
+  const { username, password, role, email } = req.body;
+  
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.send('User already exists');
 
-try{
-const existingUser=await User.findOne({email}) 
-if (existingUser) return res.send('user already exist')
+  
+const otp = Math.floor(100000 + Math.random() * 900000);
 
-  const newUser=new User({username,password,role,email})
-  await newUser.save()
-res.redirect('/login')
-}catch (err){
-  console.error("reg error",err)
-res.send('registration failed')
-}
+// Remove old OTP if exists
+await Otp.deleteOne({ email });
 
-})
+await Otp.create({
+  email,
+  otp,
+  username,
+  password,
+  role
+});
+
+
+    await sendOTP(email, otp);
+    res.render('user/verify-email', { email }); 
+  } catch (err) {
+    console.error("Registration error", err);
+    res.send('Registration failed');
+  }
+});
+
+
+
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    const record = await Otp.findOne({ email: email.trim() });
+
+    console.log("Stored record:", record);
+    console.log("Submitted OTP:", otp);
+
+    if (!record || record.otp.toString() !== otp.trim()) {
+      return res.send('Invalid or expired OTP');
+    }
+
+   
+   const existingUser = await User.findOne({ username: record.username });
+
+
+    if (existingUser) {
+      return res.send('User with this username or email already exists');
+    }
+
+    // Create the new user
+    const newUser = new User({
+      username: record.username,
+      password: record.password,
+      role: record.role,
+      email: email.trim()
+    });
+
+    await newUser.save();
+
+    
+    await Otp.deleteOne({ email: email.trim() });
+
+    res.redirect('/login');
+  } catch (err) {
+    console.error("OTP Verification Error:", err);
+    res.status(500).send("Something went wrong during OTP verification");
+  }
+});
+
+
+
 
 
 router.post('/login', async (req, res) => {
@@ -75,8 +136,7 @@ const refreshToken = jwt.sign(
     } else {
       res.redirect('/books');
     }
-    // res.send({"Login successful": true, "role": user.role, "username": user.username});
-
+    
   } catch (err) {
     console.error("Login error:", err);
     res.send("Login failed");
@@ -163,7 +223,7 @@ router.post('/buy', authenticateToken, authorizeRoles('user'), async (req, res) 
 
   const total = cart.items.reduce((sum, item) => {
     return sum + item.bookId.price * item.quantity;
-  }, 50.34);
+  }, 0);
 
   const request = new paypal.orders.OrdersCreateRequest();
   request.prefer("return=representation");
@@ -205,7 +265,7 @@ router.get('/success', async (req, res) => {
 
   try {
     const capture = await client().execute(request);
-    console.log("✅ Payment Success:", capture.result);
+    console.log(" Payment Success:", capture.result);
 
     // Clear cart or show success message
     res.send("Payment successful. Thank you for your purchase!");
