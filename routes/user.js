@@ -14,6 +14,7 @@ router.get('/register', (req, res) => res.render('user/register'));
 router.get('/login',(req,res)=>{
   const accessToken = req.cookies.accessToken
 
+
 try{
   const decoded=jwt.verify(accessToken,process.env.JWT_SECRET)
   if(decoded.role==='admin'){
@@ -107,8 +108,8 @@ const hashedPassword = await bcrypt.hash(rawPassword, 10);
       username: record.username,
       password: hashedPassword,
        role: record.role,
-      email: email.trim().toLowerCase()
-
+      email: email.trim().toLowerCase(),
+       isVerified:true
     });
 
     await newUser.save();
@@ -133,6 +134,9 @@ router.post('/login', async (req, res) => {
 
   try {
     const user = await User.findOne({ email: email.trim().toLowerCase() });
+if (!user.isVerified) {
+  return res.send("Please verify your account via OTP before logging in");
+}
 
     if (!user) {
       console.log("No user found with email:", email);
@@ -141,9 +145,7 @@ router.post('/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-     console.log("🔍 Input password:", password);
-console.log("🔍 Hashed password from DB:", user.password);
-console.log("✅ bcrypt.compare result:", isMatch);
+
       return res.send("Invalid credentials");
     }
 
