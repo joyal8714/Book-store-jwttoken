@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const User=require('../models/User');
 let refreshTokens = [];
 const Otp = require('../models/Otp');
+const bcrypt = require('bcrypt');
 
 // View Routes
 router.get('/register', (req, res) => res.render('user/register'));
@@ -33,28 +34,43 @@ const sendOTP = require('../utils/mailer');
 
 router.post('/register', async (req, res) => {
   const { username, password, role, email } = req.body;
-  
+console.log(" REGISTER FORM DATA:", req.body);
+
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) return res.send('User already exists');
 
-  
-const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = Math.floor(100000 + Math.random() * 900000);
+console.log("From FORM →", { username, password, email, role });
+    // Remove old OTP if exists
+    await Otp.deleteOne({ email });
 
-// Remove old OTP if exists
-await Otp.deleteOne({ email });
+    try {
+      const newOtp = await Otp.create({
+        email,
+        otp,
+        username,
+        password,
+        role
+      });
+      console.log(" Password sent to OTP DB:", password);
 
-await Otp.create({
-  email,
-  otp,
-  username,
-  password,
-  role
-});
+const allOtps = await Otp.find({});
+console.log("All OTPs in DB:", allOtps);
 
+      console.log("OTP saved to DB:", newOtp);
+
+      
+      const count = await Otp.countDocuments({});
+      console.log("Current OTP count in DB:", count);
+
+    } catch (err) {
+      console.log("Error saving OTP to DB:", err);
+    }
 
     await sendOTP(email, otp);
-    res.render('user/verify-email', { email }); 
+    res.render('user/verify-email', { email });
+
   } catch (err) {
     console.error("Registration error", err);
     res.send('Registration failed');
@@ -76,20 +92,23 @@ router.post('/verify-otp', async (req, res) => {
       return res.send('Invalid or expired OTP');
     }
 
-   
-   const existingUser = await User.findOne({ username: record.username });
+  const existingUser = await User.findOne({
+  $or: [{ username: record.username }, { email: email.trim().toLowerCase() }]
+});
 
+if (existingUser) {
+  return res.send('User with this username or email already exists');
+}
 
-    if (existingUser) {
-      return res.send('User with this username or email already exists');
-    }
-
+const rawPassword = record.password.toString();
+const hashedPassword = await bcrypt.hash(rawPassword, 10);
     // Create the new user
     const newUser = new User({
       username: record.username,
-      password: record.password,
-      role: record.role,
-      email: email.trim()
+      password: hashedPassword,
+       role: record.role,
+      email: email.trim().toLowerCase()
+
     });
 
     await newUser.save();
@@ -109,39 +128,53 @@ router.post('/verify-otp', async (req, res) => {
 
 
 router.post('/login', async (req, res) => {
-  const { username, password,email } = req.body;
+  const { password, email } = req.body;
+  console.log("Login form data:", req.body);
 
   try {
-    const user = await User.findOne({ email });
-    if (!user || user.password !== password) {
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+    if (!user) {
+      console.log("No user found with email:", email);
       return res.send("Invalid credentials");
     }
 
-   const accessToken = jwt.sign(
-  { _id: user._id, username, role: user.role }, 
-  process.env.JWT_SECRET, 
-  { expiresIn: '15m' }
-);
-const refreshToken = jwt.sign(
-  { _id: user._id, username, role: user.role }, 
-  process.env.JWT_REFRESH_SECRET
-);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+     console.log("🔍 Input password:", password);
+console.log("🔍 Hashed password from DB:", user.password);
+console.log("✅ bcrypt.compare result:", isMatch);
+      return res.send("Invalid credentials");
+    }
+
+    const accessToken = jwt.sign(
+      { _id: user._id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { _id: user._id, username: user.username, role: user.role },
+      process.env.JWT_REFRESH_SECRET
+    );
 
     res.cookie('accessToken', accessToken, { httpOnly: true });
     res.cookie('refreshToken', refreshToken, { httpOnly: true });
 
-  
+    console.log(` ${user.username} logged in successfully`);
+
     if (user.role === 'admin') {
-      res.redirect('/admin/add-book');
+      return res.redirect('/admin/add-book');
     } else {
-      res.redirect('/books');
+      return res.redirect('/books');
     }
-    
+
   } catch (err) {
-    console.error("Login error:", err);
+    console.error(" Login error:", err.message);
     res.send("Login failed");
   }
 });
+
 
 
 router.get('/logout', (req, res) => {
@@ -278,8 +311,6 @@ router.get('/success', async (req, res) => {
 router.get('/cancel', (req, res) => {
   res.send("Payment cancelled");
 });
-
-
 
 
 

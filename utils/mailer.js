@@ -15,7 +15,7 @@ async function sendOTP(email, otp) {
     subject: 'Verify your Email',
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="color: #333;">Email Verification</h2>
+        <h2 style="color: #333;">YOUR OTP IS HERE</h2>
         <p style="font-size: 16px; color: #555;">
           Thank you for registering. Please use the OTP below to verify your email:
         </p>
