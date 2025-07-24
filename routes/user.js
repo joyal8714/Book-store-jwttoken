@@ -292,23 +292,45 @@ router.post('/buy', authenticateToken, authorizeRoles('user'), async (req, res) 
 
 const paypal = require('@paypal/checkout-server-sdk');
 
-router.get('/success', async (req, res) => {
-  const { token } = req.query;
 
-  const request = new paypal.orders.OrdersCaptureRequest(token);
-  request.requestBody({});
+router.get('/success', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  const { token } = req.query; // token from PayPal approval URL
+  const userId = req.user._id;
 
   try {
+    //  Capture payment
+    const request = new paypal.orders.OrdersCaptureRequest(token);
+    request.requestBody({});
     const capture = await client().execute(request);
-    console.log(" Payment Success:", capture.result);
 
-    // Clear cart or show success message
-    res.send("Payment successful. Thank you for your purchase!");
+
+    //  Clear the cart
+    await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { items: [] } }
+    );
+
+    //  Redirect to thank-you or success page
+    res.send(`
+      <h1 style="text-align: center; color: green;">✅ Payment successful!</h1>
+      <p style="text-align: center;">Thank you for your purchase, ${req.user.username}!</p>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="/books" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Continue Shopping</a>
+      </div>
+    `);
+
   } catch (err) {
-    console.error("Capture Error", err);
-    res.status(500).send("Failed to capture order");
+    console.error("❌ Payment Capture Error:", err.message);
+    res.send(`
+      <h1 style="text-align: center; color: red;">❌ Payment failed!</h1>
+      <p style="text-align: center;">There was an issue capturing your payment.</p>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="/cart" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Back to Cart</a>
+      </div>
+    `);
   }
 });
+
 
 router.get('/cancel', (req, res) => {
   res.send("Payment cancelled");
@@ -328,5 +350,53 @@ router.get('/books', authenticateToken, async (req, res) => {
 
 router.get('/', (req, res) => res.redirect('/login'));
 
+
+
+
+
+
+router.post('/buy-all', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const cart = await Cart.findOne({ userId }).populate('items.bookId');
+    if (!cart || cart.items.length === 0) {
+      return res.send("🛒 Your cart is empty.");
+    }
+
+    // Calculate total
+    const total = cart.items.reduce((sum, item) => {
+      return sum + item.bookId.price * item.quantity;
+    }, 0);
+
+    // 🧾 Create PayPal order
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer("return=representation");
+    request.requestBody({
+      intent: "CAPTURE",
+      purchase_units: [{
+        amount: {
+          currency_code: "USD",
+          value: total.toFixed(2)
+        }
+      }],
+      application_context: {
+        return_url: "http://localhost:3000/success",
+        cancel_url: "http://localhost:3000/cancel"
+      }
+    });
+
+    const order = await client().execute(request);
+    const approvalUrl = order.result.links.find(link => link.rel === 'approve').href;
+
+    console.log("✅ PayPal order created for BUY ALL:", order.result.id);
+
+    res.redirect(approvalUrl);
+
+  } catch (err) {
+    console.error("BUY ALL ERROR:", err.message);
+    res.status(500).send("❌ Something went wrong during BUY ALL");
+  }
+});
 
 module.exports = router;
