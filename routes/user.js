@@ -7,7 +7,7 @@ const User=require('../models/User');
 let refreshTokens = [];
 const Otp = require('../models/Otp');
 const bcrypt = require('bcrypt');
-
+const Order = require('../models/Order');
 // View Routes
 router.get('/register', (req, res) => res.render('user/register'));
 
@@ -294,23 +294,43 @@ const paypal = require('@paypal/checkout-server-sdk');
 
 
 router.get('/success', authenticateToken, authorizeRoles('user'), async (req, res) => {
-  const { token } = req.query; // token from PayPal approval URL
+  const { token } = req.query;
   const userId = req.user._id;
 
   try {
-    //  Capture payment
+    // 1. Capture PayPal payment
     const request = new paypal.orders.OrdersCaptureRequest(token);
     request.requestBody({});
     const capture = await client().execute(request);
 
+    // 2. Get user's cart before clearing
+    const cart = await Cart.findOne({ userId }).populate('items.bookId');
 
-    //  Clear the cart
+    if (!cart || cart.items.length === 0) {
+      return res.send("Cart is empty or not found.");
+    }
+
+    // 3. Calculate total amount
+    const totalAmount = cart.items.reduce((sum, item) => {
+      return sum + item.bookId.price * item.quantity;
+    }, 0);
+
+    // 4. Save order to DB
+    const newOrder=await Order.create({
+      userId,
+      items: cart.items,
+      amount: totalAmount,
+      status: 'completed'
+    });
+    console.log("order saved successfully",newOrder)
+
+    // 5. Clear the cart
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { items: [] } }
     );
 
-    //  Redirect to thank-you or success page
+    // 6. Show success message
     res.send(`
       <h1 style="text-align: center; color: green;">✅ Payment successful!</h1>
       <p style="text-align: center;">Thank you for your purchase, ${req.user.username}!</p>
@@ -318,7 +338,6 @@ router.get('/success', authenticateToken, authorizeRoles('user'), async (req, re
         <a href="/books" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Continue Shopping</a>
       </div>
     `);
-
   } catch (err) {
     console.error("❌ Payment Capture Error:", err.message);
     res.send(`
@@ -332,11 +351,10 @@ router.get('/success', authenticateToken, authorizeRoles('user'), async (req, re
 });
 
 
+
 router.get('/cancel', (req, res) => {
   res.send("Payment cancelled");
 });
-
-
 
 
 
@@ -398,5 +416,25 @@ router.post('/buy-all', authenticateToken, authorizeRoles('user'), async (req, r
     res.status(500).send("❌ Something went wrong during BUY ALL");
   }
 });
+
+
+
+
+
+router.get('/orders', authenticateToken, authorizeRoles('user'), async (req, res) => {
+  try {
+  const orders = await Order.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('items.bookId') 
+      .lean(); 
+          res.render('user/orders', { orders, user: req.user });
+    console.log('fetched oders',orders)
+  } catch (err) {
+    console.log("❌ Error while fetching the orders:", err);
+    res.status(500).send("Something went wrong");
+  }
+});
+
+
 
 module.exports = router;

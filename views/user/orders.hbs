@@ -1,0 +1,24 @@
+<h2 style="text-align: center; margin-top: 20px; color: #333;">📦 Your Orders</h2>
+
+{{#if orders.length}}
+  <div style="max-width: 800px; margin: auto; padding: 20px;">
+    {{#each orders}}
+      <div style="border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9;">
+        <p><strong>Amount:</strong> ₹{{this.amount}}</p>
+        <p><strong>Status:</strong> {{this.status}}</p>
+        <p><strong>Date:</strong> {{formatDate this.createdAt}}</p>
+
+        {{#each this.items}}  <!-- Loop through each item inside the order -->
+          <div style="margin-top: 10px;">
+            <img src="/uploads/{{this.bookId.cover}}" alt="{{this.bookId.title}}" style="width: 100px; height: 140px; object-fit: cover; border-radius: 5px;" />
+            <p><strong>Title:</strong> {{this.bookId.title}}</p>
+            <p><strong>Quantity:</strong> {{this.quantity}}</p>
+          </div>
+        {{/each}}
+
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <p style="text-align: center; color: #888;">You have no orders yet.</p>
+{{/if}}

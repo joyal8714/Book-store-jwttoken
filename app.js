@@ -5,6 +5,7 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
+const moment = require('moment');
 
 const app = express();
 
@@ -16,20 +17,31 @@ app.use(express.static('public'));
 mongoose.connect('mongodb://127.0.0.1:27017/book-manager', {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log(' MongoDB Connected'))
-  .catch(err => console.error(' MongoDB Connection Error:', err));
+}).then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cookieParser()); // Important for JWT access via cookies
+app.use(cookieParser()); // For accessing JWT in cookies
 
-// Static Files
+// Static file folders
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 
-// View Engine - Handlebars
+// ✅ Set up express-handlebars with helpers
+const hbs = exphbs.create({
+  extname: 'hbs',
+  defaultLayout: 'main',
+  layoutsDir: path.join(__dirname, 'views/layouts'),
+  helpers: {
+    eq: (a, b) => a === b,
+    multiply: (a, b) => a * b,
+    formatDate: (date) => moment(date).format("MMMM Do YYYY, h:mm:ss a")
+  }
+});
 
+app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -38,25 +50,10 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 
 app.use('/admin', adminRoutes);
-app.use('/', userRoutes); // Includes login, register, books, etc.
+app.use('/', userRoutes); // login, register, books, orders, etc.
 
-// Start Server
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Book Manager running at http://localhost:${PORT}`);
+  console.log(`running at http://localhost:${PORT}`);
 });
-
-//  Register the helper here
-const hbs = exphbs.create({
-  extname: 'hbs',
-  defaultLayout: 'main',
-  layoutsDir: path.join(__dirname, 'views/layouts'),
-  helpers: {
-    eq: (a, b) => a === b,
-    multiply: (a, b) => a * b
-  }
-});
-
-app.engine('hbs', hbs.engine); 
-app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, 'views'));
