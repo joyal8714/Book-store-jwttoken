@@ -1,0 +1,30 @@
+<h1>📦 All Orders</h1>
+
+<table border="1" cellpadding="10" cellspacing="0" style="width: 100%; margin-top: 20px;">
+  <thead>
+    <tr style="background-color: #f0f0f0;">
+      <th>User</th>
+      <th>Books</th>
+      <th>Total Items</th>
+      <th>Ordered At</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each orders}}
+      <tr>
+        <td>{{this.userId.email}}</td>
+        <td>
+          <ul>
+            {{#each this.items}}
+              <li>
+                 {{this.bookId.title}} - ₹{{this.bookId.price}} × {{this.quantity}}
+              </li>
+            {{/each}}
+          </ul>
+        </td>
+        <td>{{this.items.length}}</td>
+        <td>{{this.createdAt}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

@@ -4,7 +4,7 @@ const Book = require("../models/Book");
 const multer = require("multer");
 const path = require("path");
 const User = require('../models/User'); 
-
+const order=require('../models/Order')
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
     const uniqueName = Date.now() + "-" + sanitizedName;
     cb(null, uniqueName);
   },
-});
+});   
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
@@ -129,26 +129,40 @@ router.get("/edit-book/:id", authenticateToken, authorizeRoles("admin"), async (
   }
 });
 
-router.get("/edit-book/:id", authenticateToken, authorizeRoles("admin"), async (req, res) => {
-  try {
-    const updateData = {
-      title: req.body.title,
-      author: req.body.author,
-      price: req.body.price,
-    };
+router.post(
+  "/edit-book/:id",
+  authenticateToken,
+  authorizeRoles("admin"),
+  (req, res, next) => {
+    upload.single("cover")(req, res, function (err) {
+      if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).send("File too large. Max size allowed is 5MB.");
+      } else if (err) {
+        return res.status(400).send("Upload failed: " + err.message);
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      const updateData = {
+        title: req.body.title,
+        author: req.body.author,
+        price: req.body.price,
+      };
 
-    // Only update image if a new one is uploaded
-    if (req.file) {
-      updateData.cover = req.file.filename;
+      if (req.file) {
+        updateData.cover = req.file.filename;
+      }
+
+      await Book.findByIdAndUpdate(req.params.id, updateData);
+      res.redirect("/admin/add-book");
+    } catch (err) {
+      console.error("Error updating book:", err);
+      res.status(500).send("Failed to update book");
     }
-
-    await Book.findByIdAndUpdate(req.params.id, updateData);
-    res.redirect("/admin/add-book");
-  } catch (err) {
-    console.error("Error updating book:", err);
-    res.status(500).send("Failed to update book");
   }
-});
+);
 
 // DELETE BOOK ROUTE
 router.post("/delete-book/:id", authenticateToken, authorizeRoles("admin"), async (req, res) => {
@@ -220,6 +234,27 @@ router.post('/toggle-block/:id', async (req, res) => {
   }
 });
 
+
+
+
+//orders
+
+router.get('/orders',authenticateToken,authorizeRoles("admin"),async(req,res)=>{
+
+  try{
+  const orders=await order.find()
+      .sort({ createdAt: -1 })
+    .populate('items.bookId')
+    .populate('userId')
+    .lean()
+res.render('admin/orders',{orders})
+console.log("oders fetched succes",orders)
+}catch(err){
+console.error("error while fetching the oders",err)
+res.status(500).send("ERROR WHILE FETCHING ODER")
+}
+
+})
 
 
 module.exports = router;

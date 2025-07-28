@@ -1,51 +1,219 @@
-<h1></h1>
-<nav style="background: #333; padding: 10px;">
-  <a href="/admin/add-book" style="color: white; margin-right: 20px;">📚 Add New Books</a>
-  <a href="/admin/users" style="color: white; margin-right: 20px;">👥 Users</a>
-  <a href="/admin/coupons" style="color: white;">🎟️ Coupons</a>
-</nav>
-<h1>Add new book</h1>
-<form action="/logout" method="GET" style="text-align:right">
-  <button type="submit" style="background-color: red; color: white; text-align:right">Logout</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Book</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+    }
 
-<form action="/admin/add-book" method="POST" enctype="multipart/form-data" style="margin-bottom: 30px;">
-  <label for="title">Title:</label><br>
-  <input type="text" id="title" name="title" placeholder="Title" required><br><br>
+    nav {
+      background: #2c3e50;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  <label for="author">Author:</label><br>
-  <input type="text" id="author" name="author" placeholder="Author" required><br><br>
+    nav a {
+      color: white;
+      margin-right: 20px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
 
-  <label for="price">Price:</label><br>
-  <input type="number" id="price" name="price" placeholder="Price" required><br><br>
+    nav a:hover {
+      color: #ffc107;
+    }
 
-  <label for="cover">Book Cover:</label><br>
-  <input type="file" id="cover" name="cover" accept="image/*" required><br><br>
+    nav .right {
+      margin-left: auto;
+    }
 
-  <button type="submit">📚 Add Book</button>
-</form>
+    h1, h2 {
+      text-align: center;
+      color: #343a40;
+      margin-top: 30px;
+    }
 
-<hr>
+    form.logout-form {
+      text-align: right;
+      margin: 20px 40px 0 0;
+    }
 
-<h2>All Books</h2>
+    .logout-form button {
+      background-color: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-<div style="display: flex; flex-wrap: wrap; gap: 20px;">
-  {{#each books}}
-    <div style="border: 1px solid #ccc; padding: 10px; width: 200px; text-align: center;">
-      <img src="/uploads/{{this.cover}}" alt="{{this.title}}" style="width: 100px; height: 140px; object-fit: cover;"><br>
-      <strong>{{this.title}}</strong><br>
-      <small>by {{this.author}}</small><br>
-      <p style="color: green;">₹{{this.price}}</p>
-        
-    <a href="/admin/edit-book/{{this._id}}">
-      <button>Edit</button>
-    </a>
- <form action="/admin/delete-book/{{this._id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?')">
-  <button type="submit" style="color: red;">Delete</button>
-</form>
+    .logout-form button:hover {
+      background-color: #c82333;
+    }
 
+    form.add-form {
+      max-width: 500px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
+    form.add-form label {
+      font-weight: bold;
+    }
+
+    form.add-form input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    form.add-form button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    form.add-form button:hover {
+      background-color: #0056b3;
+    }
+
+    hr {
+      margin: 50px auto;
+      width: 80%;
+      border: 0;
+      border-top: 1px solid #ccc;
+    }
+
+    .books-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 0 40px 60px;
+    }
+
+    .book-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+
+    .book-card:hover {
+      transform: scale(1.03);
+    }
+
+    .book-card img {
+      width: 100px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .book-card button {
+      margin: 5px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .book-card a button {
+      background-color: #17a2b8;
+      color: white;
+    }
+
+    .book-card form button {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .book-card form button:hover {
+      background-color: #bd2130;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div>
+      <a href="/admin/add-book">📚 Add New Books</a>
+      <a href="/admin/users">👥 Users</a>
+      <a href="/admin/coupons">🎟️ Coupons</a>
+      <a href="/admin/orders">🛒 Orders</a>
     </div>
-    
-  {{/each}}
-</div>
+  </nav>
+
+  <!-- Logout -->
+  <form action="/logout" method="GET" class="logout-form">
+    <button type="submit">Logout</button>
+  </form>
+
+  <!-- Title -->
+  <h1>Add New Book</h1>
+
+  <!-- Add Book Form -->
+  <form action="/admin/add-book" method="POST" enctype="multipart/form-data" class="add-form">
+    <label for="title">Title:</label><br>
+    <input type="text" id="title" name="title" placeholder="Title" required><br>
+
+    <label for="author">Author:</label><br>
+    <input type="text" id="author" name="author" placeholder="Author" required><br>
+
+    <label for="price">Price:</label><br>
+    <input type="number" id="price" name="price" placeholder="Price" required><br>
+
+    <label for="cover">Book Cover:</label><br>
+    <input type="file" id="cover" name="cover" accept="image/*" required><br>
+
+    <button type="submit">📚 Add Book</button>
+  </form>
+
+  <hr>
+
+  <!-- Book List -->
+  <h2>All Books</h2>
+  <div class="books-container">
+    {{#each books}}
+      <div class="book-card">
+        <img src="/uploads/{{this.cover}}" alt="{{this.title}}">
+        <strong>{{this.title}}</strong><br>
+        <small>by {{this.author}}</small><br>
+        <p style="color: green;">₹{{this.price}}</p>
+
+        <a href="/admin/edit-book/{{this._id}}">
+          <button>Edit</button>
+        </a>
+        <form action="/admin/delete-book/{{this._id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?')">
+          <button type="submit">Delete</button>
+        </form>
+      </div>
+    {{/each}}
+  </div>
+
+</body>
+</html>

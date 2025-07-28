@@ -18,6 +18,6 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: 'pending'
   }
-}, { timestamps: true });  // ✅ This adds createdAt and updatedAt automatically
+}, { timestamps: true });  //  This adds createdAt and updatedAt automatically
 
 module.exports = mongoose.model('Order', orderSchema);

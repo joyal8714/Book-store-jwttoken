@@ -1,11 +1,98 @@
-<h2>Register</h2>
-<form method="POST" action="/register">
-  <input name="username" placeholder="Username" required />
-  <input type="email" id="email" name="email" placeholder="Email" required>
-  <input name="password" type="password" placeholder="Password" required />
-  <select name="role">
-    <option value="user">User</option>
-    <option value="admin">Admin</option>
-  </select>
-  <button type="submit">Register</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #fdfbfb, #ebedee);
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .register-container {
+      background: #ffffff;
+      padding: 40px 30px;
+      border-radius: 15px;
+      width: 400px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      text-align: center;
+    }
+
+    .register-container:hover {
+      transform: scale(1.02);
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 25px;
+      font-size: 28px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 12px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      background: #f9f9f9;
+      box-shadow: inset 2px 2px 5px #e0e0e0, inset -2px -2px 5px #ffffff;
+      transition: 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #28a745;
+      box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <h2>📝 Register</h2>
+
+    <form method="POST" action="/register">
+      <input name="username" placeholder="Username" required />
+      <input type="email" id="email" name="email" placeholder="Email" required />
+      <input name="password" type="password" placeholder="Password" required />
+      
+      <select name="role">
+        <option value="user">👤 User</option>
+        <option value="admin">🛠️ Admin</option>
+      </select>
+      
+      <button type="submit">Register</button>
+    </form>
+  </div>
+
+</body>
+</html>

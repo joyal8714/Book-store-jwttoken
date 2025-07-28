@@ -407,13 +407,13 @@ router.post('/buy-all', authenticateToken, authorizeRoles('user'), async (req, r
     const order = await client().execute(request);
     const approvalUrl = order.result.links.find(link => link.rel === 'approve').href;
 
-    console.log("✅ PayPal order created for BUY ALL:", order.result.id);
+    console.log(" PayPal order created for BUY ALL:", order.result.id);
 
     res.redirect(approvalUrl);
 
   } catch (err) {
     console.error("BUY ALL ERROR:", err.message);
-    res.status(500).send("❌ Something went wrong during BUY ALL");
+    res.status(500).send(" Something went wrong during BUY ALL");
   }
 });
 
@@ -430,7 +430,7 @@ router.get('/orders', authenticateToken, authorizeRoles('user'), async (req, res
           res.render('user/orders', { orders, user: req.user });
     console.log('fetched oders',orders)
   } catch (err) {
-    console.log("❌ Error while fetching the orders:", err);
+    console.log("Error while fetching the orders:", err);
     res.status(500).send("Something went wrong");
   }
 });
