@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const moment = require('moment');
 
+
 const app = express();
 
 // Enable CORS
@@ -37,14 +38,13 @@ const hbs = exphbs.create({
   helpers: {
     eq: (a, b) => a === b,
     multiply: (a, b) => a * b,
-    formatDate: (date) => moment(date).format("MMMM Do YYYY, h:mm:ss a")
+    formatDate: (date) => moment(date).format("MMMM Do YYYY, h:mm:ss a"),
+    encodeURIComponent: (value) => encodeURIComponent(value) // ✅ Add here!
   }
 });
-
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
-
 // Routes
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
@@ -57,3 +57,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`running at http://localhost:${PORT}`);
 });
+
+
+
+
+

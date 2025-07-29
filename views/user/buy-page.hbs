@@ -1,0 +1,18 @@
+<h2 style="text-align: center; font-size: 28px; margin-top: 30px;">
+  🛍 Buy "{{product.title }}" – ₹{{product.price}}
+</h2>
+
+
+
+<div style="text-align: center; margin-top: 40px;">
+  <a href="{{upiLink}}" target="_blank">
+    <button style="background-color: #0f9d58; color: white; padding: 12px 24px; font-size: 18px; border: none; border-radius: 6px; cursor: pointer;">
+      💸 Pay with GPay (₹{{product.price}})
+    </button>
+  </a>
+
+  <p style="margin-top: 20px;">Or scan this QR code with any UPI app:</p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?data={{encodeURIComponent upiLink}}&size=300x300" alt="Scan to Pay">
+</div>
+
+

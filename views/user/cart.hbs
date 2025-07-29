@@ -6,6 +6,13 @@
   </form>
 </div>
 
+
+
+
+
+
+
+
 {{#if hasItems}}
 <form action="/buy-all" method="POST" style="text-align: center; margin-top: 30px;">
   <button type="submit" style="background-color: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
@@ -25,12 +32,23 @@
           <p style="margin: 0;">🧾 Quantity: <strong>{{this.quantity}}</strong></p>
           <p style="margin: 5px 0 15px;">📦 Total: ₹<strong>{{multiply this.bookId.price this.quantity}}</strong></p>
 
-          <form action="/buy" method="POST">
-            <button type="submit" style="background-color: #28a745; color: white; padding: 8px 18px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
-              ✅ BUY NOW
-            </button>
-          </form>
-          
+        <!-- PayPal Buy Button -->
+{{!-- <form action="/buy" method="POST">
+  <button type="submit" style="background-color: #28a745; color: white; padding: 8px 18px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+    ✅ BUY NOW (PayPal)
+  </button>
+</form> --}}
+<a href="/buyy/{{this.bookId._id}}">
+  <button style="background-color: #0f9d58; color: white; padding: 8px 18px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+    <img src="/images/g.png" alt="GPay" style="height: 24px;">
+    PAY WITH GPay
+  </button>
+</a>
+
+
+<!-- QR Code for Scan-based GPay -->
+{{!-- <img src="https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=upi://pay?pa=joyal4309@oksbi&pn=Joyal%20Bookstore&am={{multiply this.bookId.price this.quantity}}&cu=INR&tn=Buy%20{{this.bookId.title}}" alt="GPay QR" style="margin-top: 10px; border: 1px solid #ccc; padding: 5px; border-radius: 5px;">
+           --}}
         </div>
       </div>
     {{/each}}

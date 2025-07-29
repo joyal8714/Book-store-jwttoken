@@ -429,12 +429,40 @@ router.get('/orders', authenticateToken, authorizeRoles('user'), async (req, res
       .lean(); 
           res.render('user/orders', { orders, user: req.user });
     console.log('fetched oders',orders)
-  } catch (err) {
-    console.log("Error while fetching the orders:", err);
-    res.status(500).send("Something went wrong");
+  } catch (err){
+    console.log("error in while fetching orders",err)
+    res.status(500).send('error while fetching orders')
   }
 });
 
+
+
+
+
+router.get('/buyy/:id', async (req, res) => {
+  try {
+    const productDoc = await Book.findById(req.params.id);
+
+    if (!productDoc) {
+      return res.status(404).send('Product not found');
+    }
+
+    const product = productDoc.toObject(); 
+
+    const note = encodeURIComponent(`Buy ${product.title}`);
+    const upiLink = `upi://pay?pa=joyal4309@oksbi&pn=Joyal%20Bookstore&am=${product.price}&cu=INR&tn=${note}`;
+    const qrLink = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(upiLink)}`;
+
+    res.render('user/buy-page', {
+      product,
+      upiLink,
+      qrLink
+    });
+  } catch (error) {
+    console.error('Error in /buyy route:', error);
+    res.status(500).send('Something went wrong.');
+  }
+});
 
 
 module.exports = router;
