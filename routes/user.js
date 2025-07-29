@@ -8,6 +8,7 @@ let refreshTokens = [];
 const Otp = require('../models/Otp');
 const bcrypt = require('bcrypt');
 const Order = require('../models/Order');
+
 // View Routes
 router.get('/register', (req, res) => res.render('user/register'));
 
@@ -440,31 +441,45 @@ router.get('/orders', authenticateToken, authorizeRoles('user'), async (req, res
 
 
 
+// if not already imported
 
-router.get('/buyy/:id', async (req, res) => {
+router.get('/buyy/:id', authenticateToken, authorizeRoles('user'), async (req, res) => {
   try {
-    const productDoc = await Book.findById(req.params.id);
+    const bookId = req.params.id;
+    const userId = req.user._id;
 
-    if (!productDoc) {
-      return res.status(404).send('Product not found');
-    }
+    // Get the book
+    const productDoc = await Book.findById(bookId);
+    if (!productDoc) return res.status(404).send('Product not found');
+    const product = productDoc.toObject();
 
-    const product = productDoc.toObject(); 
+    // Get user's cart and find quantity of this book
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).send('Cart not found');
 
-    const note = encodeURIComponent(`Buy ${product.title}`);
-    const upiLink = `upi://pay?pa=joyal4309@oksbi&pn=Joyal%20Bookstore&am=${product.price}&cu=INR&tn=${note}`;
+    const cartItem = cart.items.find(item => item.bookId.equals(bookId));
+    if (!cartItem) return res.status(404).send('This book is not in your cart.');
+
+    const quantity = cartItem.quantity || 1;
+    const totalPrice = product.price * quantity;
+
+    // UPI and QR
+    const note = encodeURIComponent(`Buy ${product.title} x${quantity}`);
+    const upiLink = `upi://pay?pa=joyal4309@oksbi&pn=Joyal%20Bookstore&am=${totalPrice}&cu=INR&tn=${note}`;
     const qrLink = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(upiLink)}`;
 
     res.render('user/buy-page', {
       product,
+      quantity,
+      totalPrice,
       upiLink,
       qrLink
     });
+
   } catch (error) {
     console.error('Error in /buyy route:', error);
     res.status(500).send('Something went wrong.');
   }
 });
-
 
 module.exports = router;
