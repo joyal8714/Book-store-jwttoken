@@ -194,6 +194,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 router.post('/add-to-cart/:bookId', authenticateToken, authorizeRoles('user'), async (req, res) => {
   const userId = req.user._id;
   const bookId = req.params.bookId;
+  const quantity = parseInt(req.body.quantity) || 1;
 
   try {
     let cart = await Cart.findOne({ userId });
@@ -206,20 +207,21 @@ router.post('/add-to-cart/:bookId', authenticateToken, authorizeRoles('user'), a
     const existingItem = cart.items.find(item => item.bookId.equals(bookId));
 
     if (existingItem) {
-      existingItem.quantity += 1;
+      existingItem.quantity += quantity; // ✅ Corrected to add selected quantity
     } else {
-      cart.items.push({ bookId });
+      cart.items.push({ bookId, quantity }); // ✅ Add with selected quantity
     }
 
     await cart.save();
-    res.redirect('/books'); // or to /cart if you prefer
+
+    // Return JSON for frontend JavaScript to handle response
+    res.status(200).json({ message: 'Added to cart successfully' });
 
   } catch (err) {
     console.error('Add to cart error:', err);
-    res.status(500).send('Failed to add to cart');
+    res.status(500).json({ error: 'Failed to add to cart' });
   }
 });
-
 
 
 router.get('/cart', authenticateToken, authorizeRoles('user'), async (req, res) => {

@@ -39,9 +39,19 @@ const hbs = exphbs.create({
     eq: (a, b) => a === b,
     multiply: (a, b) => a * b,
     formatDate: (date) => moment(date).format("MMMM Do YYYY, h:mm:ss a"),
-    encodeURIComponent: (value) => encodeURIComponent(value) // ✅ Add here!
+    encodeURIComponent: (value) => encodeURIComponent(value),
+
+    // ✅ Add this helper
+    range: function(start, end, options) {
+      let result = '';
+      for (let i = start; i <= end; i++) {
+        result += options.fn(i);
+      }
+      return result;
+    }
   }
 });
+
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));

@@ -29,12 +29,7 @@
     </div>
   </div>
 
-
-
   <!-- Logout & Cart Buttons -->
- 
-
-
   <div style="display: flex; gap: 12px;">
     <form action="/logout" method="GET">
       <button type="submit" 
@@ -43,9 +38,9 @@
       </button>
     </form>
     <a href="/orders" 
-   style="background-color: #17a2b8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-  📦 Your Orders
-</a>
+       style="background-color: #17a2b8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+      📦 Your Orders
+    </a>
 
     <a href="/cart" 
        style="background-color: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.2s;">
@@ -86,7 +81,13 @@
 
       <!-- User Add to Cart -->
       {{#if (eq ../user.role "user")}}
-        <form onsubmit="return addToCart(event, '{{this._id}}')" style="margin-top: 10px;">
+        <form onsubmit="return addToCart(event, '{{this._id}}')" style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+          <select id="qty-{{this._id}}" style="padding: 6px 10px; border-radius: 6px;">
+            {{#range 1 10}}
+              <option value="{{this}}">{{this}}</option>
+            {{/range}}
+          </select>
+
           <button type="submit" 
                   class="add-cart-btn" 
                   id="btn-{{this._id}}" 
@@ -100,20 +101,18 @@
   {{/each}}
 </div>
 
-
-
-
-
 <!-- Add to Cart Script -->
 <script>
   async function addToCart(event, bookId) {
     event.preventDefault();
     const button = document.getElementById(`btn-${bookId}`);
-
+    const qty = document.getElementById(`qty-${bookId}`).value;
+    
     try {
       const res = await fetch(`/add-to-cart/${bookId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: parseInt(qty) })
       });
 
       if (res.ok) {
