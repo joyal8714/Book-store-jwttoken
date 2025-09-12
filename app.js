@@ -30,7 +30,7 @@ app.use(cookieParser()); // For accessing JWT in cookies
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 
-// ✅ Set up express-handlebars with helpers
+//  Set up express-handlebars with helpers
 const hbs = exphbs.create({
   extname: 'hbs',
   defaultLayout: 'main',
@@ -41,7 +41,6 @@ const hbs = exphbs.create({
     formatDate: (date) => moment(date).format("MMMM Do YYYY, h:mm:ss a"),
     encodeURIComponent: (value) => encodeURIComponent(value),
 
-    // ✅ Add this helper
     range: function(start, end, options) {
       let result = '';
       for (let i = start; i <= end; i++) {
